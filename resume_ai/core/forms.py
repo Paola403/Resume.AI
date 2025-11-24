@@ -1,49 +1,25 @@
+
+from django.contrib.auth.forms import UserCreationForm
 from django import forms
-from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
-from django.forms import ModelForm
-from core.models import resume_ai
+from django.contrib.auth import get_user_model
 
-class LoginForm(ModelForm):
-    class Meta:
+User = get_user_model()
+
+class CadastroForm(UserCreationForm):
+    # Campos adicionais não presentes no UserCreationForm nativo
+    nome_completo = forms.CharField(label='Nome Completo', max_length=100)
+    telefone = forms.CharField(label='Telefone', max_length=15, required=False) # Opcional
+
+    class Meta(UserCreationForm.Meta):
         model = User
-        fields = ('email', 'password')
-        labels = {
-            'email': 'E-Mail:',
-            'password': 'Senha:',
-        }
-        widgets = {
-            'email': forms.EmailInput(attrs={'class': 'form-control',
-                                             'placeholder':'Digite seu e-mail'}),
-            'password': forms.PasswordInput(attrs={'class': 'form-control',
-                                                   'placeholder':'Digite sua senha'}),
-        }
-        error_messages = {
-            'email': {
-                'required': ("Informe o e-mail."),
-            },
-        }
+        fields = UserCreationForm.Meta.fields + ('email', 'nome_completo', 'telefone')
 
-    def clean_email(self):
-        email = self.cleaned_data['email']
-        if not email.endswith('@gmail.com'):
-            raise ValidationError('Informe seu e-mail institucional.')
-        return self.cleaned_data['email']
-
-    def clean(self):
-        cleaned_data = super().clean()
-        email = cleaned_data.get('email')
-        password = cleaned_data.get('password')
-
-        if email and password:
-            try:
-                user = User.objects.get(email=email)
-            except User.DoesNotExist:
-                raise ValidationError("Usuário com esse e-mail não encontrado.")
-
-            user = authenticate(username=user.username, password=password)
-            if user is None:
-                raise ValidationError("Senha incorreta para o e-mail informado.")
-
-            self.user = user
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        
+        user.email = self.cleaned_data["email"]
+        user.username = self.cleaned_data["email"]
+        
+        if commit:
+            user.save()
+        return user
