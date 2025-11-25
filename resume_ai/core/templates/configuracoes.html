@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <h1 class="text-center mb-4">⚙️ Configurações de Conta</h1>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h4>Alterar Dados</h4>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Use esta seção para atualizar seu nome, e-mail ou telefone. Você precisará de um formulário de alteração de dados aqui.</p>
+                <a href="#" class="btn btn-primary">Alterar Dados</a>
+                <a href="#" class="btn btn-outline-secondary">Alterar Senha</a>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4>Excluir Conta</h4>
+            </div>
+            <div class="card-body">
+                <p class="card-text text-danger">A exclusão da conta é permanente e não pode ser desfeita.</p>
+                <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">Excluir Minha Conta</button>
+            </div>
+        </div>
+        
+        </div>
+</div>
+{% endblock content %}

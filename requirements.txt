@@ -10,6 +10,7 @@ decorator==5.2.1
 Django==5.2.8
 django-widget-tweaks==1.5.0
 executing==2.2.1
+fpdf==1.7.2
 google-auth==2.43.0
 google-genai==1.50.1
 h11==0.16.0

@@ -1,24 +1,31 @@
-
-from django.contrib.auth.forms import UserCreationForm
 from django import forms
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
 class CadastroForm(UserCreationForm):
-    # Campos adicionais não presentes no UserCreationForm nativo
-    nome_completo = forms.CharField(label='Nome Completo', max_length=100)
-    telefone = forms.CharField(label='Telefone', max_length=15, required=False) # Opcional
+    nome_completo = forms.CharField(max_length=150, required=True)
+    telefone = forms.CharField(max_length=20, required=False)
 
-    class Meta(UserCreationForm.Meta):
+    class Meta:
         model = User
-        fields = UserCreationForm.Meta.fields + ('email', 'nome_completo', 'telefone')
+        fields = ["username", 
+                  "email", 
+                  "nome_completo", 
+                  "telefone", 
+                  "password1", 
+                  "password2"]
+
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Este e-mail já está cadastrado.")
+        return email
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        
-        user.email = self.cleaned_data["email"]
-        user.username = self.cleaned_data["email"]
+        user.username = self.cleaned_data['username']
         
         if commit:
             user.save()

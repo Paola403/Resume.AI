@@ -2,18 +2,37 @@ import os
 import pypdf
 import json
 from django.http import JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.views.generic import CreateView
+from django.contrib.auth import logout
 from dotenv import load_dotenv
-
-# Importações do Gemini (Adicionadas para o resumo)
+from .models import PDFHistory
 from google import genai
 from google.genai.errors import APIError
-
 from .forms import CadastroForm 
+
+@login_required
+def historico_resumos(request):
+    historicos = PDFHistory.objects.filter(user=request.user).order_by('-enviado_em')
+    return render(request, 'historico.html', {'historicos': historicos})
+
+@login_required
+def deletar_pdf(request, id):
+    pdf = get_object_or_404(PDFHistory, id=id, user=request.user)
+
+    # Exclui o arquivo físico
+    if pdf.arquivo and os.path.exists(pdf.arquivo.path):
+        os.remove(pdf.arquivo.path)
+
+    pdf.delete()  # Exclui do banco
+
+    return redirect("historico")
+
+# Importações do Gemini (Adicionadas para o resumo)
+
 # from .models import DocumentoPDF # Se for usar modelos, descomente
 
 # --- CONFIGURAÇÃO GLOBAL DO GEMINI (ROBUSTA) ---
@@ -41,9 +60,13 @@ User = get_user_model()
 def index(request):
     return render(request, 'index.html', {'titulo': 'Página Inicial'})
 
+# --- 2. VIEW DE CONFIGURAÇÕES DE CONTA ---
+@login_required
+def configuracoes_conta_view(request):
+    """Renderiza o painel de configurações para alterar/excluir conta."""
+    return render(request, 'configuracoes.html', {'titulo': 'Configurações de Conta'})
 
-# --- 2. VIEW DE CADASTRO ---
-# Mantém a sua lógica de CadastroView
+# --- 3. VIEW DE CADASTRO ---
 class CadastroView(CreateView):
     model = User
     form_class = CadastroForm
@@ -55,7 +78,12 @@ class CadastroView(CreateView):
         return super().dispatch(request, *args, **kwargs)
 
 
-# --- 3. VIEW DE RESUMO PDF (CRUCIAL PARA A IA) ---
+# --- 4 VIEW DE LOGOUT ---
+def logout_page_view(request):
+    logout(request)  
+    return render(request, 'logout.html')
+
+# --- 5. VIEW DE RESUMO PDF ---
 @login_required
 def resumir_pdf_view(request):
     """Lida com GET (renderiza formulário) e POST (processa resumo com Gemini)."""
@@ -74,11 +102,20 @@ def resumir_pdf_view(request):
 
         if not uploaded_file:
             return JsonResponse({'error': 'Nenhum arquivo PDF enviado.'}, status=400)
+        
+        # Salva o histórico do PDF enviado
+        if request.user.is_authenticated:
+            PDFHistory.objects.create(
+            user=request.user,
+            arquivo=uploaded_file
+        )
+
             
         # 2. Extrair o texto do PDF
         try:
             pdf_reader = pypdf.PdfReader(uploaded_file)
             text = "".join(page.extract_text() for page in pdf_reader.pages if page.extract_text())
+
         except Exception as e:
             return JsonResponse({'error': f'Erro ao processar PDF (pypdf): {e}'}, status=500)
         
@@ -88,7 +125,7 @@ def resumir_pdf_view(request):
         # 3. Chamar a API do Gemini
         try:
             prompt = (
-                f"Resuma o seguinte texto de um documento PDF. O resumo deve ser conciso, ter de 3 a 5 parágrafos e estar no idioma **{language}**.\n\n"
+                f"Resuma o seguinte texto de um documento PDF. O resumo deve ser conciso, ter de 3 a 5 parágrafos e estar no idioma  **{language}**.\n\n"
                 f"TEXTO DO PDF:\n{text}"
             )
 
