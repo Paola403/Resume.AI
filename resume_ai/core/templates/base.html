@@ -37,7 +37,9 @@
                     <i class="fa-solid fa-user"></i> {{ user.nome_exibicao|default:user.username }}
                 </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="{% url 'historico' %}">Histórico de PDFs</a></li>
+                        <li><a class="dropdown-item" href="{% url 'index' %}">Home</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'historico' %}">Histórico de Resumos</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'configuracoes_conta' %}">Configurações</a></li>
                         <li><hr class="dropdown-divider"></li>

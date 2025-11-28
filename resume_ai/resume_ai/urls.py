@@ -29,7 +29,10 @@ urlpatterns = [
     path('historico/', core_views.historico_resumos, name='historico'),
 
     # Rota para Deleção do PDF
-    path("historico/deletar/<int:id>/", core_views.deletar_pdf, name="deletar_pdf")
+    path("historico/deletar/<int:id>/", core_views.deletar_pdf, name="deletar_pdf"),
+
+    # Rota para Alteração de Dados do Usuário
+    path('alterar-dados/', core_views.alterar_dados_view, name='alterar_dados'),
 
 ]
 

@@ -3,13 +3,13 @@
 # -----------------
 # 1. Arquivos de Segurança (CRÍTICO)
 # -----------------
-# Garante que chaves de API e segredos NÃO sejam enviados!
+# Chave de onde está a APIs e outras variáveis sensíveis
 .env
 
 # -----------------
 # 2. Ambientes Virtuais (CRÍTICO)
 # -----------------
-# Seu ambiente virtual (venv, env, etc.)
+# Ambiente virtual (venv, env, etc.)
 venv/
 env/
 

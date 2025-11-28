@@ -1,6 +1,5 @@
 import os
 import pypdf
-import json
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
@@ -12,13 +11,20 @@ from dotenv import load_dotenv
 from .models import PDFHistory
 from google import genai
 from google.genai.errors import APIError
-from .forms import CadastroForm 
+from .forms import CadastroForm, UpdateUserForm 
+from django.core.files.base import ContentFile
+from fpdf import FPDF
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
 
+# VIEW DO HISTÓRICO DE RESUMOS
 @login_required
 def historico_resumos(request):
     historicos = PDFHistory.objects.filter(user=request.user).order_by('-enviado_em')
     return render(request, 'historico.html', {'historicos': historicos})
 
+# DELETA O PDF DO HISTÓRICO
 @login_required
 def deletar_pdf(request, id):
     pdf = get_object_or_404(PDFHistory, id=id, user=request.user)
@@ -66,6 +72,22 @@ def configuracoes_conta_view(request):
     """Renderiza o painel de configurações para alterar/excluir conta."""
     return render(request, 'configuracoes.html', {'titulo': 'Configurações de Conta'})
 
+# --- VIEW DE ALTERAÇÃO DE DADOS DO USUÁRIO ---
+@login_required
+def alterar_dados_view(request):
+    user = request.user
+
+    if request.method == 'POST':
+        form = UpdateUserForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Dados alterados com sucesso!")
+            return redirect('alterar_dados')
+    else:
+        form = UpdateUserForm(instance=user)
+
+    return render(request, 'alterar_dados.html', {'form': form})
+
 # --- 3. VIEW DE CADASTRO ---
 class CadastroView(CreateView):
     model = User
@@ -91,59 +113,69 @@ def resumir_pdf_view(request):
     # Checagem de Disponibilidade da API
     if client is None:
         if request.method == 'POST':
-            return JsonResponse({'error': 'O serviço de IA está indisponível. Verifique a chave de API no .env.'}, status=503)
-        return render(request, 'resumir_pdf.html') 
-
+            return JsonResponse({'error': 'O serviço de IA está indisponível. Verifique a chave de API.'}, status=503)
+        return render(request, 'resumir_pdf.html')
 
     if request.method == 'POST':
-        # 1. Recebe dados e arquivo
+        # 1. Receber PDF
         uploaded_file = request.FILES.get('pdf_file')
-        language = request.POST.get('language', 'Português') 
+        language = request.POST.get('language', 'Português')
 
         if not uploaded_file:
             return JsonResponse({'error': 'Nenhum arquivo PDF enviado.'}, status=400)
-        
-        # Salva o histórico do PDF enviado
-        if request.user.is_authenticated:
-            PDFHistory.objects.create(
-            user=request.user,
-            arquivo=uploaded_file
-        )
 
-            
-        # 2. Extrair o texto do PDF
+        # 2. Extrair texto do PDF
         try:
             pdf_reader = pypdf.PdfReader(uploaded_file)
-            text = "".join(page.extract_text() for page in pdf_reader.pages if page.extract_text())
+            text = "".join(page.extract_text() or "" for page in pdf_reader.pages)
 
         except Exception as e:
             return JsonResponse({'error': f'Erro ao processar PDF (pypdf): {e}'}, status=500)
-        
+
         if not text.strip():
-             return JsonResponse({'error': 'O PDF não contém texto legível ou está vazio.'}, status=400)
+            return JsonResponse({'error': 'O PDF não contém texto legível.'}, status=400)
 
         # 3. Chamar a API do Gemini
         try:
             prompt = (
-                f"Resuma o seguinte texto de um documento PDF. O resumo deve ser conciso, ter de 3 a 5 parágrafos e estar no idioma  **{language}**.\n\n"
-                f"TEXTO DO PDF:\n{text}"
+                f"Resuma o seguinte texto de um documento PDF. "
+                f"O resumo deve ser conciso, com 3 a 5 parágrafos, no idioma **{language}**.\n\n"
+                f"{text}"
             )
 
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model="gemini-2.5-flash",
                 contents=prompt
             )
-            
-            if not response.text:
-                 return JsonResponse({'error': 'A API bloqueou a resposta ou retornou vazia.'}, status=500)
-            
-            return JsonResponse({'summary': response.text}, status=200)
 
-        except APIError as e:
-            return JsonResponse({'error': f'Erro específico da API Gemini (Chave/Cota): {e}'}, status=500)
-        
+            resumo = response.text
+
+            if not resumo:
+                return JsonResponse({'error': 'A API retornou uma resposta vazia.'}, status=500)
+
         except Exception as e:
-            return JsonResponse({'error': f'Erro inesperado na chamada da API: {e}'}, status=500)
+            return JsonResponse({'error': f'Erro ao gerar resumo: {e}'}, status=500)
 
-    # Se a requisição for GET, renderiza a página do formulário
+        # 4. Criar PDF com o resumo gerado
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.set_font("Arial", size=12)
+
+        for linha in resumo.split("\n"):
+            pdf.multi_cell(0, 10, linha)
+
+        pdf_bytes = pdf.output(dest='S').encode('latin-1')
+        pdf_file = ContentFile(pdf_bytes)
+
+        nome_pdf = f"resumo_{uploaded_file.name.replace('.pdf','')}.pdf"
+
+        # 5. Salvar PDF do resumo no banco
+        registro = PDFHistory.objects.create(user=request.user)
+        registro.arquivo.save(nome_pdf, pdf_file)
+
+        # 6. Retornar resumo para a tela
+        return JsonResponse({'summary': resumo}, status=200)
+
+    # GET
     return render(request, 'resumir_pdf.html')
