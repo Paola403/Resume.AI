@@ -34,6 +34,8 @@ urlpatterns = [
     # Rota para Alteração de Dados do Usuário
     path('alterar-dados/', core_views.alterar_dados_view, name='alterar_dados'),
 
+    # Rota para Alteração de Senha
+    path("alterar-senha/", core_views.alterar_senha, name="alterar_senha"),
 ]
 
 if settings.DEBUG:

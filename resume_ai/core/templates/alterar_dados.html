@@ -15,12 +15,12 @@
                 </div>
             {% endfor %}
 
-            <!-- Redirecionar após 1 segundos somente nesta página -->
+            <!-- Redirecionar após 1,5 segundos somente nesta página -->
             <script>
                 setTimeout(function() {
-                    // Redireciona para a página de configurações após 1 segundos
+                    // Redireciona para a página de configurações após 1,5 segundos
                     window.location.href = "{% url 'configuracoes_conta' %}";
-                }, 1000);
+                }, 1500);
             </script>
         {% endif %}
 

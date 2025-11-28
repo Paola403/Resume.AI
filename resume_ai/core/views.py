@@ -8,15 +8,16 @@ from django.contrib.auth.decorators import login_required
 from django.views.generic import CreateView
 from django.contrib.auth import logout
 from dotenv import load_dotenv
-from .models import PDFHistory
+from .models import PDFHistory, PasswordResetCode 
 from google import genai
 from google.genai.errors import APIError
-from .forms import CadastroForm, UpdateUserForm 
+from .forms import CadastroForm, UpdateUserForm, ChangePasswordForm 
 from django.core.files.base import ContentFile
 from fpdf import FPDF
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
+from django.utils import timezone
+from django.core.mail import send_mail
+import random
 
 # VIEW DO HISTÓRICO DE RESUMOS
 @login_required
@@ -179,3 +180,81 @@ def resumir_pdf_view(request):
 
     # GET
     return render(request, 'resumir_pdf.html')
+
+# --- 6. VIEW DE ALTERAÇÃO DE SENHA ---
+@login_required
+def alterar_senha(request):
+    user = request.user
+
+    # Se clicou em "esqueci minha senha"
+    if "esqueci" in request.GET:
+        # Gera código
+        codigo = str(random.randint(100000, 999999))
+        expira = timezone.now() + timezone.timedelta(minutes=10)
+
+        # Atualiza ou cria o código
+        reset_obj, created = PasswordResetCode.objects.get_or_create(user=user)
+        reset_obj.code = codigo
+        reset_obj.expires_at = expira
+        reset_obj.save()
+
+        # Envia e-mail
+        send_mail(
+            "Código de verificação - Alteração de senha",
+            f"Seu código de verificação é: {codigo}",
+            None,
+            [user.email],
+        )
+
+        messages.info(request, "Código de verificação enviado para seu e-mail!")
+        form = ChangePasswordForm(initial={"modo": "codigo"})
+        return render(request, "alterar_senha.html", {"form": form, "modo": "codigo"})
+
+    if request.method == "POST":
+        form = ChangePasswordForm(request.POST)
+
+        modo = request.POST.get("modo")
+
+        if modo == "senha":
+            # Valida senha atual
+            atual = request.POST.get("campo_verificacao")
+
+            if not user.check_password(atual):
+                messages.error(request, "Senha atual incorreta.")
+                return render(request, "alterar_senha.html", {"form": form, "modo": "senha"})
+
+            # Troca senha
+            user.set_password(request.POST.get("nova_senha"))
+            user.save()
+            messages.success(request, "Senha alterada com sucesso!")
+            return redirect("login")
+
+        else:
+            # Verifica código
+            codigo_digitado = request.POST.get("campo_verificacao")
+
+            try:
+                reset = PasswordResetCode.objects.get(user=user)
+            except PasswordResetCode.DoesNotExist:
+                messages.error(request, "Nenhum código de verificação encontrado.")
+                return redirect("alterar_senha")
+
+            if not reset.is_valid():
+                messages.error(request, "Código expirado. Gere outro.")
+                reset.delete()
+                return redirect("alterar_senha")
+
+            if reset.code != codigo_digitado:
+                messages.error(request, "Código incorreto.")
+                return render(request, "alterar_senha.html", {"form": form, "modo": "codigo"})
+
+            # OK → troca senha
+            user.set_password(request.POST.get("nova_senha"))
+            user.save()
+            reset.delete()
+
+            messages.success(request, "Senha alterada com sucesso!")
+            return redirect("login")
+
+    form = ChangePasswordForm(initial={"modo": "senha"})
+    return render(request, "alterar_senha.html", {"form": form, "modo": "senha"})

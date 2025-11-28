@@ -83,4 +83,40 @@ class UpdateUserForm(forms.ModelForm):
             raise forms.ValidationError("Campo obrigatório vazio.")
 
         return username
+    
+# ------------------------------------------------------------------------------------------------------------
+# Formulário para redefinição de senha via código
+
+class ChangePasswordForm(forms.Form):
+    modo = forms.CharField(widget=forms.HiddenInput(), initial="senha")  
+    # valores possíveis: "senha" ou "codigo"
+
+    campo_verificacao = forms.CharField(
+        required=False,
+        label="Senha Atual",
+        widget=forms.PasswordInput(),
+    )
+
+    nova_senha = forms.CharField(
+        required=True,
+        label="Nova Senha",
+        widget=forms.PasswordInput(),
+    )
+
+    confirmar_senha = forms.CharField(
+        required=True,
+        label="Confirmar Nova Senha",
+        widget=forms.PasswordInput(),
+    )
+
+    def clean(self):
+        cleaned = super().clean()
+
+        nova = cleaned.get("nova_senha")
+        confirmar = cleaned.get("confirmar_senha")
+
+        if nova != confirmar:
+            raise forms.ValidationError("As senhas não coincidem.")
+
+        return cleaned
 
