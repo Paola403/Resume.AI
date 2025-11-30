@@ -25,12 +25,11 @@ Além disso, o sistema conta com funcionalidades de autenticação completa, his
 - Logout  
 - Alterar dados do perfil  
 - Alterar senha com verificação  
-
 - Fluxo completo de *Esqueci minha senha* com:
   - Código de verificação de 6 dígitos  
   - Expiração automática  
   - Validação antes da troca da senha
-- OBS(Fluxo de Esqueci minha senha Incompleto)
+- OBS (Fluxo de Esqueci minha senha Incompleto)
 
 ### 📄 Resumo de PDF
 - Upload de arquivos PDF  
@@ -53,7 +52,6 @@ O projeto inclui testes cobrindo:
 - Login e logout  
 - Alteração de dados  
 - Alteração de senha  
-- Fluxo de esqueci minha senha  
 
 ---
 
