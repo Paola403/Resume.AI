@@ -25,7 +25,7 @@ Além disso, o sistema conta com funcionalidades de autenticação completa, his
 - Logout  
 - Alterar dados do perfil  
 - Alterar senha com verificação  
-- Fluxo completo de *Esqueci minha senha* com:
+- Fluxo de *Esqueci minha senha* com:
   - Código de verificação de 6 dígitos  
   - Expiração automática  
   - Validação antes da troca da senha
