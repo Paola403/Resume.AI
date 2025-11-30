@@ -29,7 +29,7 @@ Além disso, o sistema conta com funcionalidades de autenticação completa, his
   - Código de verificação de 6 dígitos  
   - Expiração automática  
   - Validação antes da troca da senha
-- OBS (Fluxo de Esqueci minha senha Incompleto)
+  - OBS (Fluxo de Esqueci minha senha Incompleto)
 
 ### 📄 Resumo de PDF
 - Upload de arquivos PDF  
@@ -98,7 +98,7 @@ python manage.py runserver
 ## ⚙️ Colocando a chave da API
 
 - Renomeie o .env.example para apenas **.env**
-- Coloque a cheve da API do Google AI (Gemini)
+- Coloque a chave da API do Google AI (Gemini)
 
 ---
 
