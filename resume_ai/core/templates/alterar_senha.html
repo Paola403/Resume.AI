@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 550px;">
+    <div class="card shadow-sm p-4">
+
+        <h3 class="text-center mb-4">Alterar Senha</h3>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} text-center">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Redirecionamento automático após sucesso -->
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == "success" %}
+                    <script>
+                setTimeout(function() {
+                    window.location.href = "{% url 'login' %}";
+                }, 1500);
+            </script>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <!-- Campo oculto que indica o modo -->
+            <input type="hidden" name="modo" id="modo" value="senha">
+
+            <div class="mb-3">
+                <label class="form-label"><strong id="label-senha">Senha Atual</strong></label>
+                <input type="password" name="campo_verificacao" id="campo_verificacao" class="form-control">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label"><strong>Nova Senha</strong></label>
+                <input type="password" name="nova_senha" class="form-control">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label"><strong>Confirmar Nova Senha</strong></label>
+                <input type="password" name="confirmar_senha" class="form-control">
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <button type="submit" class="btn btn-primary px-4">Salvar</button>
+                <a href="{% url 'configuracoes_conta' %}" class="btn btn-secondary px-4">Cancelar</a>
+            </div>
+
+            <div class="mt-4 text-center">
+                <button type="button" id="btn-esqueci" class="btn btn-link p-0" style="font-size: 0.9rem;">
+                    Esqueceu sua senha?
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Usuário clicou em "Esqueci minha senha"
+    document.getElementById("btn-esqueci").addEventListener("click", function () {
+        document.getElementById("label-senha").textContent = "Código de Verificação";
+        document.getElementById("campo_verificacao").placeholder = "Digite o código recebido";
+
+        // muda o modo para código
+        document.getElementById("modo").value = "codigo";
+
+        this.textContent = "Código enviado! Verifique seu e-mail";
+        this.disabled = true;
+
+        // dispara a URL de envio automático do código
+        window.location.href = "?esqueci=true";
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container d-flex justify-content-center mt-5">
+    <div class="card shadow-sm p-4" style="width: 480px;">
+        <h3 class="text-center mb-4">Alterar Dados da Conta</h3>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+
+            <!-- Redirecionar após 1,5 segundos somente nesta página -->
+            <script>
+                setTimeout(function() {
+                    // Redireciona para a página de configurações após 1,5 segundos
+                    window.location.href = "{% url 'configuracoes_conta' %}";
+                }, 1500);
+            </script>
+        {% endif %}
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label" style="font-size:1.05rem; font-weight:600;">
+                        {{ field.label }}
+                    </label>
+                    {{ field|add_class:"form-control" }}
+                    {% if field.help_text %}
+                        <div class="form-text small text-muted">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% if field.errors %}
+                        <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary w-100 mt-2">Salvar Alterações</button>
+            <a href="{% url 'configuracoes_conta' %}" class="btn btn-secondary w-100 mt-2">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

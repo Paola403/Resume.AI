@@ -1,0 +1,42 @@
+{% extends "base.html" %} 
+
+{% load widget_tweaks %}  {% block content %}
+    <main class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6 col-md-8 col-sm-10">
+                
+                <form method="post" class="p-4 border rounded shadow-sm">
+                    {% csrf_token %} 
+                    <h1 class="text-center mb-4">Cadastro de Usuário</h1>
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% for field in form %}
+                        <div class="input-box mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                            
+                            {{ field|add_class:"form-control" }} 
+                            
+                            {% for error in field.errors %}
+                                <p class="text-danger small mt-1">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                    
+                    <button type="submit" class="btn btn-primary w-100 login mt-3">Confirmar</button>
+
+                    <div class="register-link mt-3 text-center">
+                        <p>Já tem uma conta? <a href="{% url 'login' %}"> Faça seu Login</a></p>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </main>
+{% endblock content %}

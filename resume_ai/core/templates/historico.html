@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Histórico de Resumos</h2>
+
+    {% if historicos %}
+        <ul class="list-group">
+            {% for item in historicos %}
+               <li class="list-group-item d-flex justify-content-between align-items-center">
+
+                <span>{{ item.arquivo.name|slice:"5:" }}</span>
+
+                <div class="btn-group">
+                    <a href="{{ item.arquivo.url }}" target="_blank" class="btn btn-sm btn-primary">
+                        Abrir PDF
+                    </a>
+
+                <a href="{% url 'deletar_pdf' item.id %}" 
+                    class="btn btn-sm btn-danger"
+                    onclick="return confirm('Tem certeza que deseja apagar este PDF?');">
+                        Deletar
+                </a>
+</div>
+            </li>
+
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted">Nenhum PDF gerado ainda.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

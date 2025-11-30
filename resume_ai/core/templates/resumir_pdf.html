@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <h1 class="text-center mb-4">📄 Resumir PDF com IA (Gemini)</h1>
+        
+        <form id="summarize-form" action="{% url 'resumir_pdf' %}" method="post" enctype="multipart/form-data" class="p-4 border rounded shadow-sm">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="id_pdf_file" class="form-label">Selecione seu Arquivo PDF:</label>
+                <input type="file" name="pdf_file" id="id_pdf_file" class="form-control" accept=".pdf" required>
+                <div class="form-text">Apenas arquivos .pdf são aceitos.</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="language" class="form-label">Idioma do Resumo:</label>
+                <select class="form-select" id="language" name="language">
+                    <option value="Português">Português</option>
+                    <option value="Inglês">Inglês</option>
+                    <option value="Espanhol">Espanhol</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100 mt-4" id="submit-btn">
+                <span id="spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                <span id="button-text" class="text-center">Resumir Conteúdo</span>
+            </button>
+        </form>
+
+        <hr class="my-4">
+
+                <div id="loading-area" class="alert alert-info d-none text-center">
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Processando o PDF e gerando o resumo...
+        </div>
+        <div id="error-area" class="alert alert-danger d-none"></div>
+
+        <div id="summary-result" class="card mt-4 d-none">
+            <div class="card-header bg-primary text-white">
+                <h4>✨ Resumo Gerado</h4>
+            </div>
+            <div class="card-body">
+                <p id="summary-text" class="card-text"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Lógica JavaScript para Requisição AJAX (Este é o lugar correto) ---
+    document.getElementById('summarize-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const form = e.target;
+        const formData = new FormData(form);
+        const submitBtn = document.getElementById('submit-btn');
+        const buttonText = document.getElementById('button-text');
+        const spinner = document.getElementById('spinner');
+        
+        // Resetar e mostrar carregamento
+        document.getElementById('error-area').classList.add('d-none');
+        document.getElementById('summary-result').classList.add('d-none');
+        document.getElementById('loading-area').classList.remove('d-none');
+        
+        // Estado de Carregamento
+        submitBtn.disabled = true;
+        buttonText.textContent = 'Aguarde...';
+        spinner.classList.remove('d-none');
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json().then(data => ({ status: response.status, body: data })))
+        .then(res => {
+            document.getElementById('loading-area').classList.add('d-none');
+
+            if (res.status === 200) {
+                // Sucesso
+                // Formata o texto para quebras de linha (<br><br>)
+                document.getElementById('summary-text').innerHTML = res.body.summary.replace(/\n/g, '<br><br>');
+                document.getElementById('summary-result').classList.remove('d-none');
+            } else {
+                // Erro (400, 500, etc.)
+                const errorArea = document.getElementById('error-area');
+                errorArea.textContent = `Erro (${res.status}): ${res.body.error || 'Ocorreu um erro desconhecido.'}`;
+                errorArea.classList.remove('d-none');
+            }
+        })
+        .catch(error => {
+            // Erro de rede ou CORS
+            document.getElementById('loading-area').classList.add('d-none');
+            document.getElementById('error-area').textContent = `Erro de Conexão: ${error}`;
+            document.getElementById('error-area').classList.remove('d-none');
+        })
+        .finally(() => {
+            // Finaliza o estado de carregamento
+            submitBtn.disabled = false;
+            buttonText.textContent = 'Resumir Conteúdo';
+            spinner.classList.add('d-none');
+        });
+    });
+</script>
+{% endblock content %}

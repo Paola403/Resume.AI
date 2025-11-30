@@ -1,0 +1,21 @@
+{% extends 'base.html'%}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 text-center">
+        <div class="card p-5 shadow-lg border-0">
+            <h1 class="card-title display-4 mb-4 text-primary">👋 Você saiu da sua conta.</h1>
+            <p class="lead mb-4">Obrigado por usar o *🤖 Resume.AI*.</p>
+            
+            <p class="mb-4 text-muted">Para continuar resumindo PDFs, faça o login ou crie uma nova conta.</p>
+
+            <div class="d-grid gap-3">
+                <a href="{% url 'login' %}" class="btn btn-primary btn-lg">Fazer Login</a>
+                
+                <a href="{% url 'cadastro' %}" class="btn btn-outline-secondary btn-lg">Criar Nova Conta</a>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock content %}
