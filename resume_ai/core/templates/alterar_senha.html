@@ -15,12 +15,29 @@
             {% endfor %}
         {% endif %}
 
+        <!-- Redirecionamento automático após sucesso -->
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == "success" %}
+                    <script>
+                setTimeout(function() {
+                    window.location.href = "{% url 'login' %}";
+                }, 1500);
+            </script>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+
         <form method="POST">
             {% csrf_token %}
 
+            <!-- Campo oculto que indica o modo -->
+            <input type="hidden" name="modo" id="modo" value="senha">
+
             <div class="mb-3">
                 <label class="form-label"><strong id="label-senha">Senha Atual</strong></label>
-                <input type="password" name="senha_atual" id="senha_atual" class="form-control">
+                <input type="password" name="campo_verificacao" id="campo_verificacao" class="form-control">
             </div>
 
             <div class="mb-3">
@@ -48,12 +65,19 @@
 </div>
 
 <script>
-    // Troca o campo de senha atual por "código de verificação"
+    // Usuário clicou em "Esqueci minha senha"
     document.getElementById("btn-esqueci").addEventListener("click", function () {
         document.getElementById("label-senha").textContent = "Código de Verificação";
-        document.getElementById("senha_atual").placeholder = "Digite o código recebido";
-        this.textContent = "Código enviado! Verifique seu email";
+        document.getElementById("campo_verificacao").placeholder = "Digite o código recebido";
+
+        // muda o modo para código
+        document.getElementById("modo").value = "codigo";
+
+        this.textContent = "Código enviado! Verifique seu e-mail";
         this.disabled = true;
+
+        // dispara a URL de envio automático do código
+        window.location.href = "?esqueci=true";
     });
 </script>
 

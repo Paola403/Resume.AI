@@ -89,6 +89,23 @@ def alterar_dados_view(request):
 
     return render(request, 'alterar_dados.html', {'form': form})
 
+# --- VIEW DE EXCLUSÃO DE CONTA ---
+@login_required
+def excluir_conta_view(request):
+    if request.method == "POST":
+        user = request.user
+        logout(request)
+        user.delete()
+
+        return redirect("conta_excluida")
+
+    return render(request, "confirmar_exclusao.html")
+
+# --- VIEW PÁGINA DE CONTA EXCLUÍDA ---
+def conta_excluida_view(request):
+    return render(request, "conta_excluida.html")
+
+
 # --- 3. VIEW DE CADASTRO ---
 class CadastroView(CreateView):
     model = User
@@ -181,24 +198,21 @@ def resumir_pdf_view(request):
     # GET
     return render(request, 'resumir_pdf.html')
 
-# --- 6. VIEW DE ALTERAÇÃO DE SENHA ---
+# --- ALTERAR SENHA ---
 @login_required
 def alterar_senha(request):
     user = request.user
 
-    # Se clicou em "esqueci minha senha"
+    # Quando clicar em "Esqueci minha senha"
     if "esqueci" in request.GET:
-        # Gera código
         codigo = str(random.randint(100000, 999999))
         expira = timezone.now() + timezone.timedelta(minutes=10)
 
-        # Atualiza ou cria o código
         reset_obj, created = PasswordResetCode.objects.get_or_create(user=user)
         reset_obj.code = codigo
         reset_obj.expires_at = expira
         reset_obj.save()
 
-        # Envia e-mail
         send_mail(
             "Código de verificação - Alteração de senha",
             f"Seu código de verificação é: {codigo}",
@@ -206,37 +220,37 @@ def alterar_senha(request):
             [user.email],
         )
 
-        messages.info(request, "Código de verificação enviado para seu e-mail!")
-        form = ChangePasswordForm(initial={"modo": "codigo"})
-        return render(request, "alterar_senha.html", {"form": form, "modo": "codigo"})
+        messages.info(request, "Código enviado para seu e-mail!")
+        return render(request, "alterar_senha.html", {"modo": "codigo"})
 
+    # POST → tentativa de alterar senha
     if request.method == "POST":
-        form = ChangePasswordForm(request.POST)
-
         modo = request.POST.get("modo")
+        campo = request.POST.get("campo_verificacao")
+        nova = request.POST.get("nova_senha")
+        confirmar = request.POST.get("confirmar_senha")
 
+        if nova != confirmar:
+            messages.error(request, "As senhas não coincidem.")
+            return render(request, "alterar_senha.html", {"modo": modo})
+
+        # --- FLUXO NORMAL (senha atual) ---
         if modo == "senha":
-            # Valida senha atual
-            atual = request.POST.get("campo_verificacao")
-
-            if not user.check_password(atual):
+            if not user.check_password(campo):
                 messages.error(request, "Senha atual incorreta.")
-                return render(request, "alterar_senha.html", {"form": form, "modo": "senha"})
+                return render(request, "alterar_senha.html", {"modo": "senha"})
 
-            # Troca senha
-            user.set_password(request.POST.get("nova_senha"))
+            user.set_password(nova)
             user.save()
             messages.success(request, "Senha alterada com sucesso!")
-            return redirect("login")
+            return render(request, "alterar_senha.html", {"modo": "senha"})
 
+        # --- FLUXO COM CÓDIGO POR E-MAIL ---
         else:
-            # Verifica código
-            codigo_digitado = request.POST.get("campo_verificacao")
-
             try:
                 reset = PasswordResetCode.objects.get(user=user)
             except PasswordResetCode.DoesNotExist:
-                messages.error(request, "Nenhum código de verificação encontrado.")
+                messages.error(request, "Nenhum código encontrado. Clique em 'Esqueci minha senha'.")
                 return redirect("alterar_senha")
 
             if not reset.is_valid():
@@ -244,17 +258,16 @@ def alterar_senha(request):
                 reset.delete()
                 return redirect("alterar_senha")
 
-            if reset.code != codigo_digitado:
+            if campo != reset.code:
                 messages.error(request, "Código incorreto.")
-                return render(request, "alterar_senha.html", {"form": form, "modo": "codigo"})
+                return render(request, "alterar_senha.html", {"modo": "codigo"})
 
-            # OK → troca senha
-            user.set_password(request.POST.get("nova_senha"))
+            user.set_password(nova)
             user.save()
             reset.delete()
 
             messages.success(request, "Senha alterada com sucesso!")
-            return redirect("login")
+            return render(request, "alterar_senha.html", {"modo": "senha"})
 
-    form = ChangePasswordForm(initial={"modo": "senha"})
-    return render(request, "alterar_senha.html", {"form": form, "modo": "senha"})
+    # GET normal
+    return render(request, "alterar_senha.html", {"modo": "senha"})

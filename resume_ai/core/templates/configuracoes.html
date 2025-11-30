@@ -22,7 +22,9 @@
             </div>
             <div class="card-body">
                 <p class="card-text text-danger">A exclusão da conta é permanente e não pode ser desfeita.</p>
-                <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">Excluir Minha Conta</button>
+                <a href="{% url 'excluir_conta' %}" class="btn btn-danger">Excluir Minha Conta</a>
+
+
             </div>
         </div>
         

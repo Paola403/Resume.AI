@@ -36,6 +36,12 @@ urlpatterns = [
 
     # Rota para Alteração de Senha
     path("alterar-senha/", core_views.alterar_senha, name="alterar_senha"),
+
+    # Rota para Exclusão de Conta
+    path("excluir-conta/", core_views.excluir_conta_view, name="excluir_conta"),
+
+    # Rota para página de conta excluída
+    path("conta-excluida/", core_views.conta_excluida_view, name="conta_excluida"),
 ]
 
 if settings.DEBUG:

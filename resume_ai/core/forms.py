@@ -88,7 +88,7 @@ class UpdateUserForm(forms.ModelForm):
 # Formulário para redefinição de senha via código
 
 class ChangePasswordForm(forms.Form):
-    modo = forms.CharField(widget=forms.HiddenInput(), initial="senha")  
+    modo = forms.CharField(widget=forms.HiddenInput(), initial="password")  
     # valores possíveis: "senha" ou "codigo"
 
     campo_verificacao = forms.CharField(
