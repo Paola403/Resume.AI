@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path
-from django.contrib.auth import views as auth_views # Views padrão de Login/Logout
-from core import views as core_views # Importa todas as views do seu app 'core'
+from django.contrib.auth import views as auth_views
+from core import views as core_views
 from django.conf.urls.static import static
 from django.conf import settings
 
@@ -43,6 +43,6 @@ urlpatterns = [
     # Rota para página de conta excluída
     path("conta-excluida/", core_views.conta_excluida_view, name="conta_excluida"),
 ]
-
+# Abrir arquivos de mídia durante o desenvolvimento
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -19,28 +19,6 @@ from django.utils import timezone
 from django.core.mail import send_mail
 import random
 
-# VIEW DO HISTÓRICO DE RESUMOS
-@login_required
-def historico_resumos(request):
-    historicos = PDFHistory.objects.filter(user=request.user).order_by('-enviado_em')
-    return render(request, 'historico.html', {'historicos': historicos})
-
-# DELETA O PDF DO HISTÓRICO
-@login_required
-def deletar_pdf(request, id):
-    pdf = get_object_or_404(PDFHistory, id=id, user=request.user)
-
-    # Exclui o arquivo físico
-    if pdf.arquivo and os.path.exists(pdf.arquivo.path):
-        os.remove(pdf.arquivo.path)
-
-    pdf.delete()  # Exclui do banco
-
-    return redirect("historico")
-
-# Importações do Gemini (Adicionadas para o resumo)
-
-# from .models import DocumentoPDF # Se for usar modelos, descomente
 
 # --- CONFIGURAÇÃO GLOBAL DO GEMINI (ROBUSTA) ---
 # Carrega a chave de API do .env UMA VEZ
@@ -73,7 +51,7 @@ def configuracoes_conta_view(request):
     """Renderiza o painel de configurações para alterar/excluir conta."""
     return render(request, 'configuracoes.html', {'titulo': 'Configurações de Conta'})
 
-# --- VIEW DE ALTERAÇÃO DE DADOS DO USUÁRIO ---
+# --- 3. VIEW DE ALTERAÇÃO DE DADOS DO USUÁRIO ---
 @login_required
 def alterar_dados_view(request):
     user = request.user
@@ -89,7 +67,7 @@ def alterar_dados_view(request):
 
     return render(request, 'alterar_dados.html', {'form': form})
 
-# --- VIEW DE EXCLUSÃO DE CONTA ---
+# --- 4. VIEW DE EXCLUSÃO DE CONTA ---
 @login_required
 def excluir_conta_view(request):
     if request.method == "POST":
@@ -101,12 +79,32 @@ def excluir_conta_view(request):
 
     return render(request, "confirmar_exclusao.html")
 
-# --- VIEW PÁGINA DE CONTA EXCLUÍDA ---
+# --- 5. VIEW PÁGINA DE CONTA EXCLUÍDA ---
 def conta_excluida_view(request):
     return render(request, "conta_excluida.html")
 
 
-# --- 3. VIEW DE CADASTRO ---
+# --- 6. VIEW DO HISTÓRICO DE RESUMOS ---
+@login_required
+def historico_resumos(request):
+    historicos = PDFHistory.objects.filter(user=request.user).order_by('-enviado_em')
+    return render(request, 'historico.html', {'historicos': historicos})
+
+# --- 7. VIEW DELETA O PDF DO HISTÓRICO ---
+@login_required
+def deletar_pdf(request, id):
+    pdf = get_object_or_404(PDFHistory, id=id, user=request.user)
+
+    # Exclui o arquivo físico
+    if pdf.arquivo and os.path.exists(pdf.arquivo.path):
+        os.remove(pdf.arquivo.path)
+
+    pdf.delete()  # Exclui do banco
+
+    return redirect("historico")
+
+
+# --- 8. VIEW DE CADASTRO ---
 class CadastroView(CreateView):
     model = User
     form_class = CadastroForm
@@ -118,12 +116,14 @@ class CadastroView(CreateView):
         return super().dispatch(request, *args, **kwargs)
 
 
-# --- 4 VIEW DE LOGOUT ---
+# --- 9 VIEW DE LOGOUT ---
 def logout_page_view(request):
     logout(request)  
     return render(request, 'logout.html')
 
-# --- 5. VIEW DE RESUMO PDF ---
+# -------------------------------------------------------------------------------------------- #
+
+# --- 10. VIEW DE RESUMO PDF ---
 @login_required
 def resumir_pdf_view(request):
     """Lida com GET (renderiza formulário) e POST (processa resumo com Gemini)."""
@@ -195,10 +195,12 @@ def resumir_pdf_view(request):
         # 6. Retornar resumo para a tela
         return JsonResponse({'summary': resumo}, status=200)
 
-    # GET
+    
     return render(request, 'resumir_pdf.html')
 
-# --- ALTERAR SENHA ---
+# -------------------------------------------------------------------------------------------- #
+
+# --- 11. VIEW ALTERAR SENHA ---
 @login_required
 def alterar_senha(request):
     user = request.user
@@ -269,5 +271,4 @@ def alterar_senha(request):
             messages.success(request, "Senha alterada com sucesso!")
             return render(request, "alterar_senha.html", {"modo": "senha"})
 
-    # GET normal
     return render(request, "alterar_senha.html", {"modo": "senha"})
