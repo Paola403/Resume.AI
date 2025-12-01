@@ -2,7 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from .models import PasswordResetCode, PDFHistory
+from .models import PasswordResetCode
 
 User = get_user_model()
 
@@ -20,9 +20,11 @@ class UserFlowTests(TestCase):
     # TESTE DE CADASTRO
     # -------------------------------
     def test_register_user(self):
-        response = self.client.post(reverse("register"), {
+        response = self.client.post(reverse("cadastro"), {
             "username": "novo_user",
             "email": "novo@example.com",
+            "nome_completo": "Usuário Teste",
+            "telefone": "12345",
             "password1": "SenhaForte123",
             "password2": "SenhaForte123",
         })
@@ -35,7 +37,7 @@ class UserFlowTests(TestCase):
     # -------------------------------
     def test_login_success(self):
         response = self.client.post(reverse("login"), {
-            "username": "paola",
+            "username": "paola@example.com",
             "password": "senha123"
         })
 
@@ -46,86 +48,54 @@ class UserFlowTests(TestCase):
     # -------------------------------
     def test_login_fail(self):
         response = self.client.post(reverse("login"), {
-            "username": "paola",
+            "username": "paola@example.com",
             "password": "senha_errada"
         })
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Credenciais inválidas")
+        self.assertContains(response, "Por favor, entre com um email  e senha corretos")
 
     # -------------------------------
     # TESTE DE LOGOUT
     # -------------------------------
     def test_logout(self):
-        self.client.login(username="paola", password="senha123")
+        self.client.login(username="paola@example.com", password="senha123")
         response = self.client.get(reverse("logout"))
-        self.assertEqual(response.status_code, 302)
-
+        self.assertEqual(response.status_code, 200) 
+        
     # -------------------------------
     # TESTE ALTERAÇÃO DE DADOS
     # -------------------------------
     def test_update_profile(self):
-        self.client.login(username="paola", password="senha123")
+        self.client.login(username="paola@example.com", password="senha123")
 
         response = self.client.post(reverse("alterar_dados"), {
             "username": "paola_new",
             "email": "novoemail@example.com",
+            "nome_completo": "Novo Nome",
+            "telefone": "99999"
         })
 
         self.assertEqual(response.status_code, 302)
 
-        updated = User.objects.get(id=self.user.id)
-        self.assertEqual(updated.username, "paola_new")
-        self.assertEqual(updated.email, "novoemail@example.com")
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, "paola_new")
+        self.assertEqual(self.user.email, "novoemail@example.com")
 
     # -------------------------------
     # TESTE ALTERAR SENHA LOGADA
     # -------------------------------
     def test_change_password(self):
-        self.client.login(username="paola", password="senha123")
+        self.client.login(username="paola@example.com", password="senha123")
 
         response = self.client.post(reverse("alterar_senha"), {
-            "senha_atual": "senha123",
+            "modo": "senha",
+            "campo_verificacao": "senha123",
             "nova_senha": "NovaSenha123",
             "confirmar_senha": "NovaSenha123"
         })
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
 
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password("NovaSenha123"))
-
-    # -------------------------------
-    # TESTE FLUXO ESQUECI MINHA SENHA — GERAR CÓDIGO
-    # -------------------------------
-    def test_esqueci_minha_senha(self):
-        self.client.login(username="paola", password="senha123")
-
-        response = self.client.get(reverse("alterar_senha") + "?esqueci")
-        self.assertEqual(response.status_code, 200)
-
-        reset = PasswordResetCode.objects.get(user=self.user)
-        self.assertTrue(reset.code)
-        self.assertTrue(reset.expires_at > timezone.now())
-
-    # -------------------------------
-    # TESTE DE VALIDAR CÓDIGO E TROCAR A SENHA
-    # -------------------------------
-    def test_reset_password_with_code(self):
-        code_obj = PasswordResetCode.objects.create(
-            user=self.user,
-            code="123456",
-            expires_at=timezone.now() + timezone.timedelta(minutes=10)
-        )
-
-        response = self.client.post(reverse("alterar_senha") + "?esqueci", {
-            "codigo": "123456",
-            "nova_senha": "SenhaNova999",
-            "confirmar_senha": "SenhaNova999"
-        })
-
-        self.assertEqual(response.status_code, 302)
-
-        self.user.refresh_from_db()
-        self.assertTrue(self.user.check_password("SenhaNova999"))
-

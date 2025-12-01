@@ -5,13 +5,56 @@ Além disso, o sistema conta com funcionalidades de autenticação completa, his
 
 ---
 
+## 📂 Como Rodar Localmente o Projeto
+
+No ambiente Linux:
+
+```console
+git clone https://github.com/Paola403/Resume.AI.git
+virtualenv -p python3 venv
+source venv/bin/activate
+pip install -r requirements.txt
+cd resume_ai/
+python manage.py makemigrations
+python manage.py migrate
+python manage.py test
+python manage.py runserver
+```
+
+No ambiente Windows:
+
+```console
+git clone https://github.com/Paola403/Resume.AI.git
+pip install virtualenv venv
+cd venv
+cd scripts
+activate.bat
+cd ..
+cd ..
+pip install -r requirements.txt
+cd resume_ai/
+python manage.py makemigrations
+python manage.py migrate
+python manage.py test
+python manage.py runserver
+
+```
+---
+
+## ⚙️ Colocando a chave da API
+
+- Renomeie o .env.example para apenas **.env**
+- Coloque a **chave** da API do Google AI (Gemini)
+
+---
+
 ## 🚀 Tecnologias Utilizadas
 
 - **Python 3**
 - **Django**
 - **HTML + CSS + JavaScript**
 - **OpenAI API (para resumo)**
-- **SQLite / MySQL**
+- **SQLite**
 - **dotenv**
 - **pypdf**
 
@@ -24,12 +67,9 @@ Além disso, o sistema conta com funcionalidades de autenticação completa, his
 - Login  
 - Logout  
 - Alterar dados do perfil  
-- Alterar senha com verificação  
-- Fluxo de *Esqueci minha senha* com:
-  - Código de verificação de 6 dígitos  
-  - Expiração automática  
-  - Validação antes da troca da senha
-  - OBS (Fluxo de Esqueci minha senha Incompleto)
+- Alterar senha
+- Deletar conta
+
 
 ### 📄 Resumo de PDF
 - Upload de arquivos PDF  
@@ -37,10 +77,6 @@ Além disso, o sistema conta com funcionalidades de autenticação completa, his
 - Envio para IA gerar resumo  
 - Exibição na interface  
 - Salvamento automático no histórico  
-
-### 📁 Histórico
-- Lista de PDFs resumidos  
-  - Resumo gerado  
 
 ---
 
@@ -52,61 +88,12 @@ O projeto inclui testes cobrindo:
 - Login e logout  
 - Alteração de dados  
 - Alteração de senha  
-
 ---
 
-## 📂 Como Rodar Localmente o Projeto
-
-No ambiente Linux:
-
-```console
-git clone https://github.com/Paola403/Resume.AI.git
-cd resume_ai/
-virtualenv -p python3 venv
-source venv/bin/activate
-pip install -r requirements.txt
-cd resume_ai/
-python manage.py migrate
-python manage.py test
-coverage run --source='.' manage.py test 
-coverage html
-python manage.py runserver
-```
-
-No ambiente Windows:
-
-```console
-git clone https://github.com/Paola403/Resume.AI.git
-cd resume_ai/
-pip install virtualenv venv
-cd venv
-cd scripts
-activate.bat
-cd ..
-cd ..
-pip install -r requirements.txt
-cd resume_ai/
-python manage.py migrate
-python manage.py test
-coverage run --source='.' manage.py test 
-coverage html
-python manage.py runserver
-
-```
----
-
-## ⚙️ Colocando a chave da API
-
-- Renomeie o .env.example para apenas **.env**
-- Coloque a chave da API do Google AI (Gemini)
-
----
 
 ## 📌 Diferenciais
 
-- Fluxo seguro de recuperação de senha
-
-- Histórico completo de arquivos processados
+- Histórico completo de arquivos gerados
 
 - Interface simples e intuitiva
 
@@ -122,6 +109,8 @@ python manage.py runserver
 - Tema escuro
 - Exportar resumo para PDF
 - Gestão de favoritos
+- Resumos de Textos e Imagens
+- Código de verificação para _esqueci senha_
 
 ---
 
